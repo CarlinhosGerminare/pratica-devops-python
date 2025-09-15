@@ -1,0 +1,42 @@
+# .github/workflows/main.yml
+
+# Nome do nosso workflow. Aparecerá na aba "Actions" do GitHub.
+name: CI/CD Docker
+
+# Gatilho (trigger): Este workflow será executado a cada 'push' na branch 'main'.
+on:
+  push:
+    branches: [ "main" ]
+
+# Trabalhos (Jobs): Define uma ou mais tarefas a serem executadas.
+jobs:
+  # Nome do nosso job.
+  build-and-push:
+    # A máquina virtual que executará o job. 'ubuntu-latest' é uma boa escolha padrão.
+    runs-on: ubuntu-latest
+    
+    # Passos (Steps): Sequência de ações que o job executará.
+    steps:
+      # 1. Passo para clonar o código do repositório para a máquina virtual.
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Passo para fazer login no Docker Hub.
+      # Ele usa os segredos que configuramos no repositório.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Passo para construir a imagem Docker e enviá-la (push) para o Docker Hub.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          # Contexto: o diretório raiz do nosso projeto (onde está o Dockerfile).
+          context: .
+          # Enviar a imagem para o registry após o build.
+          push: true
+          # Tags da imagem. Vamos usar duas: 'latest' e o SHA do commit para versionamento.
+          # Exemplo: seu-usuario/pratica-devops-python:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/pratica-devops-python:latest, ${{ secrets.DOCKERHUB_USERNAME }}/pratica-devops-python:${{ github.sha }}
